@@ -1,19 +1,10 @@
 import React from 'react';
-import { Typography, Button } from '@mui/material';
+import { Typography, Button, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 import './userDetail.css';
-import axios from 'axios';
+import axios from 'axios'; // Import Axios
+import TopBar from '../topBar/TopBar';
 
-const renderDetail = (label, value) => (
-  <div className="box">
-    <Typography variant="body1" className="heading">
-      {label}
-    </Typography>
-    <Typography variant="body1" className="description">
-      {value}
-    </Typography>
-  </div>
-);
 
 class UserDetail extends React.Component {
   constructor(props) {
@@ -24,53 +15,96 @@ class UserDetail extends React.Component {
   }
 
   componentDidMount() {
-    this.getUserDetails();
+    this.fetchUserDetails();
   }
 
   componentDidUpdate(prevProps) {
-    const { userId } = this.props.match.params;
-    if (prevProps.match.params.userId !== userId) {
-      this.getUserDetails();
+    const { match } = this.props;
+    const { userId } = match.params;
+
+    if (prevProps.match.params.userId !== userId || !this.state.user) {
+      this.fetchUserDetails();
     }
   }
 
-  getUserDetails = () => {
-    const { userId } = this.props.match.params;
+  fetchUserDetails() {
+    const { match } = this.props;
+    const { userId } = match.params;
+
+    // Use Axios to fetch user details from the server
     axios.get(`/user/${userId}`)
       .then((response) => {
-        this.setState({
-          user: response.data,
-          selectedUser: `Details of: ${response.data.first_name} ${response.data.last_name}`,
-        });
-        
-        this.props.labelOnTopBar(this.state.selectedUser);
+        this.setState({ user: response.data });
       })
-      .catch((error) => console.error('There is an error:', error));
-  };
+      .catch((error) => {
+        console.error('Error fetching user details:', error);
+      });
+  }
 
   render() {
     const { user } = this.state;
-
+    const topNameValue = user ? `User details for ${user.first_name} ${user.last_name}` : '';
     return (
       <div>
+        <TopBar topName={topNameValue} user={user}/>
         {user ? (
           <div>
-            <Button
-              component={Link}
-              to={`/photos/${user._id}`}
-              variant="contained"
-              color="primary"
-            >
-              User Photos
-            </Button>
-            {renderDetail('First Name', user.first_name)}
-            {renderDetail('Last Name', user.last_name)}
-            {renderDetail('Location', user.location)}
-            {renderDetail('Description', user.description)}
-            {renderDetail('Occupation', user.occupation)}
+            <Grid container justifyContent="space-between">
+              <Grid item>
+                <Button component={Link} to={`/photos/${user._id}`} variant="contained" color="primary">
+                  User Photos
+                </Button>
+              </Grid>
+            </Grid>
+
+            <div className="user-detail-box" style={{ marginTop: '16px' }}>
+              <Typography variant="body1" className="user-detail-title">
+                First Name
+              </Typography>
+              <Typography variant="body1" className="user-detail-value">
+                {user.first_name}
+              </Typography>
+            </div>
+
+            {/* Include other user details here */}            
+
+            <div className="user-detail-box">
+              <Typography variant="body1" className="user-detail-title">
+                Last Name
+              </Typography>
+              <Typography variant="body1" className="user-detail-value">
+                {user.last_name}
+              </Typography>
+            </div>
+            <div className="user-detail-box">
+              <Typography variant="body1" className="user-detail-title">
+                Location
+              </Typography>
+              <Typography variant="body1" className="user-detail-value">
+                {user.location}
+              </Typography>
+            </div>
+            <div className="user-detail-box">
+              <Typography variant="body1" className="user-detail-title">
+                Description
+              </Typography>
+              <Typography variant="body1" className="user-detail-value">
+                {user.description}
+              </Typography>
+            </div>
+            <div className="user-detail-box">
+              <Typography variant="body1" className="user-detail-title">
+                Occupation
+              </Typography>
+              <Typography variant="body1" className="user-detail-value">
+                {user.occupation}
+              </Typography>
+            </div>
           </div>
         ) : (
-          <Typography variant="body1" className="box">Loading user details...</Typography>
+          <Typography variant="body1" className="user-detail-box loading-text">
+            Loading user details...
+          </Typography>
         )}
       </div>
     );
